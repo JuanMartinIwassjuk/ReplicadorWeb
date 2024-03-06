@@ -16,6 +16,7 @@ public class Configuracion {
   private String proxyPassword;
   private String nombreCarpetaDestino;
   private String usoProxy;
+  private String timeOut;
 
   public void cargarConfiguracion() {
 
@@ -48,6 +49,8 @@ public class Configuracion {
 
       this.usoProxy=propiedades.getProperty("usoProxy");
 
+      this.timeOut=propiedades.getProperty("timeOut");
+
     } catch (IOException ex) {
 
       System.err.println("Error al cargar el archivo de configuración: " + ex.getMessage());
@@ -61,8 +64,8 @@ public class Configuracion {
   public String getProxyHost(){
     return this.proxyHost;
   }
-  public String getProxyPort(){
-    return this.proxyPort;
+  public Integer getProxyPort(){
+    return Integer.parseInt(this.proxyPort);
   }
   public String getProxyUsername(){
     return this.proxyUsername;
@@ -80,5 +83,8 @@ public class Configuracion {
     }else{
      return false;
     }
+  }
+  public int getTimeOut(){
+    return Integer.parseInt(this.timeOut);
   }
 }

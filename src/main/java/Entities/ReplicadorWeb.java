@@ -2,13 +2,16 @@ package Entities;
 
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
@@ -24,14 +27,14 @@ public class ReplicadorWeb {
 
     config.cargarConfiguracion();
 
-    String url = config.getURL(); // Reemplaza con la URL de la página web que deseas replicar
+    String url = config.getURL(); // Reemplaza con la URL de la página web a replicar
 
     String directorioActual = System.getProperty("user.dir");
 
     String carpetaDestino = directorioActual + File.separator + config.getNombreCarpetaDestino();  // Crear la carpeta de destino dentro del proyecto
 
     try {
-      descargarPagina(url, carpetaDestino,config);
+      descargarPagina(url, carpetaDestino, config);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -42,21 +45,28 @@ public class ReplicadorWeb {
 
     Document doc = null;
 
-    Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.getProxyHost(), Integer.parseInt(config.getProxyPort())));
+
 
     try {
-      if(config.getUsoProxy()==true) {
-        doc = Jsoup.connect(url).proxy(proxy).get();
-      }
-      else{
+
+      if (config.getUsoProxy() == true) {
+
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.getProxyHost(), config.getProxyPort()));
+
+        doc = Jsoup.connect(url).proxy(proxy).timeout(config.getTimeOut()).get();
+
+        System.out.println("Conexion ok en IP: " + config.getProxyHost() + " y puerto "+config.getProxyPort());
+
+      } else {
         doc = Jsoup.connect(url).get();
       }
     } catch (IOException e) {
+
       e.printStackTrace();
-      
+
     }
 
-    // Crear la carpeta de destino si no existe
+    // Crea la carpeta de destino si no existe
     File carpetaDestinoFile = new File(carpetaDestino);
 
     if (!carpetaDestinoFile.exists()) {
@@ -65,14 +75,15 @@ public class ReplicadorWeb {
 
     }
 
-    // Descargar recursos asociados y modificar URLs en el HTML
+
+    // Descarga recursos asociados y modificar URLs en el HTML
 
     Elements elementosSRC = doc.select("[src]");
 
     for (Element elementoSRC : elementosSRC) {
       try {
         elementoSRC.attr("src", descargarRecurso(elementoSRC.attr("abs:src"), carpetaDestino));
-      }catch (MalformedURLException e){
+      } catch (MalformedURLException e) {
 
         System.out.println(" Se Ignora URL de tipo 'javascript'" + e.getMessage());
 
@@ -84,13 +95,32 @@ public class ReplicadorWeb {
     for (Element elementoHREF : elementosHREF) {
       try {
         elementoHREF.attr("href", descargarRecurso(elementoHREF.attr("abs:href"), carpetaDestino));
-      }catch (MalformedURLException e){
+      } catch (MalformedURLException e) {
 
         System.out.println(" Se Ignora URL de tipo 'javascript'" + e.getMessage());
 
       }
 
     }
+
+
+    Elements elementosSTYLE = doc.select("[style]");
+
+    for (Element elementoSTYLE : elementosSTYLE) {
+      try {
+        String urlBG=ExtractImageURLs.obtenerURLDeBI(elementoSTYLE.attr("abs:style"));
+          System.out.println("La url a descargar SE STYLE es"+urlBG + " "+" y la ruta q voy a descargar es esta "+ config.getURL()+File.separator+urlBG);
+            elementoSTYLE.attr("style", descargarRecurso(config.getURL()+"/"+urlBG, carpetaDestino));
+
+      } catch (MalformedURLException e) {
+
+        System.out.println(" Se Ignora URL de tipo 'javascript'" + e.getMessage());
+
+      }
+
+    }
+
+    //----------------------------
 
     // Guardar el HTML modificado en un nuevo archivo
     try (PrintWriter writer = new PrintWriter(new File(carpetaDestino, "index.html"))) {
@@ -99,6 +129,7 @@ public class ReplicadorWeb {
 
     }
   }
+
   private static String descargarRecurso(String url, String carpetaDestino) throws IOException {
 
     URL recursoURL = new URL(url);
@@ -107,7 +138,7 @@ public class ReplicadorWeb {
 
     Path archivoDestino = Paths.get(carpetaDestino, nombreArchivo);
 
-    // Descargar el recurso solo si no existe localmente
+    // Descarga el recurso solo si no existe localmente
 
     if (!Files.exists(archivoDestino)) {
 
@@ -115,16 +146,13 @@ public class ReplicadorWeb {
 
         Files.copy(in, archivoDestino, StandardCopyOption.REPLACE_EXISTING);
 
-      }
-
-      catch (FileNotFoundException e ){ // por si algun archivo que fue referenciado se encuentra borrado
+      } catch (FileNotFoundException e) { // por si algun archivo que fue referenciado se encuentra borrado
 
         System.out.println("Error: " + e.getMessage());
 
-      }
-      catch (IOException e ){// falla la url
+      } catch (IOException e) {// falla la url
 
-        System.out.println("Error: "+ e.getMessage());
+        System.out.println("Error: " + e.getMessage());
 
       }
     }
@@ -171,8 +199,25 @@ public class ReplicadorWeb {
     return nombreArchivo;
   }
 
-}
 
+  public static class BackgroundImageExtractor {
+
+    public static List<String> extraerURLsDeFondo(String estilo) {
+      List<String> urls = new ArrayList<>();
+
+      Pattern pattern = Pattern.compile("background-image:\\s*url\\(['\"]([^'\"]+)['\"]\\)");
+      Matcher matcher = pattern.matcher(estilo);
+
+      while (matcher.find()) {
+        String url = matcher.group(1);
+        urls.add(url);
+      }
+
+      return urls;
+    }
+
+  }
+}
 
 
 
