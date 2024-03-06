@@ -31,7 +31,6 @@ public class GestorDescargaRecursos {
 
       }
 
-
       // Descarga recursos asociados y modificar URLs en el HTML
 
       GestorRecursosHTML.descargarRecursosYModificarURLs("src",doc,carpetaDestino);
@@ -54,14 +53,12 @@ public class GestorDescargaRecursos {
 
     }
 
-
-
   }
   public static String descargarRecurso(String url, String carpetaDestino) throws IOException {
 
     URL recursoURL = new URL(url);
 
-    String nombreArchivo = GestorDescargaRecursos.obtenerNombreArchivoDesdeURL(url);
+    String nombreArchivo = GestorRecursosHTML.obtenerNombreArchivoDesdeURL(url);
 
     Path archivoDestino = Paths.get(carpetaDestino, nombreArchivo);
 
@@ -87,43 +84,6 @@ public class GestorDescargaRecursos {
     return nombreArchivo;
   }
 
-  public static String obtenerNombreArchivoDesdeURL(String url) throws MalformedURLException {
 
-    URL recursoURL = new URL(url);
-
-    // Obtener el último segmento de la ruta de la URL como nombre de archivo
-
-    String path = recursoURL.getPath();
-
-    String[] segments = path.split("/");
-
-    // Verificar si hay elementos en el array antes de intentar acceder al último
-
-    String nombreArchivo = "";
-
-    if (segments.length > 0) {
-
-      nombreArchivo = segments[segments.length - 1];
-
-    }
-
-    // Si el nombre de archivo sigue siendo vacío, intentar con el host y el path
-
-    if (nombreArchivo == null || nombreArchivo.isEmpty()) {
-
-      nombreArchivo = recursoURL.getHost() + path.replace("/", "_");
-
-    }
-
-    // Si todavía es nulo o vacío, proporcionar un nombre predeterminado
-
-    if (nombreArchivo == null || nombreArchivo.isEmpty()) {
-
-      nombreArchivo = "archivo_desconocido";
-
-    }
-
-    return nombreArchivo;
-  }
 
 }

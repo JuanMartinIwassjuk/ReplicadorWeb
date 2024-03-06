@@ -8,7 +8,6 @@ import java.util.Properties;
 
 
 public class Configuracion {
-
   private String url;
   private String proxyHost;
   private String proxyPort;
@@ -17,6 +16,7 @@ public class Configuracion {
   private String nombreCarpetaDestino;
   private String usoProxy;
   private String timeOut;
+  private String userAgent;
 
   public void cargarConfiguracion() {
 
@@ -50,6 +50,8 @@ public class Configuracion {
       this.usoProxy=propiedades.getProperty("usoProxy");
 
       this.timeOut=propiedades.getProperty("timeOut");
+
+      this.userAgent=propiedades.getProperty("userAgent");
 
     } catch (IOException ex) {
 
@@ -87,4 +89,6 @@ public class Configuracion {
   public int getTimeOut(){
     return Integer.parseInt(this.timeOut);
   }
+
+  public String getUserAgent(){return this.userAgent;}
 }

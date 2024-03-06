@@ -16,3 +16,4 @@ proxyPort=9090                        -->en caso de ser necesario
 timeOut=100000                        --> 0 para desactivar y en ms
 proxyUsername=usuario1                -->en caso de ser necesario
 proxyPassword=contrasenia1            -->en caso de ser necesario
+userAgent=Mozilla                     -->Recomendable
